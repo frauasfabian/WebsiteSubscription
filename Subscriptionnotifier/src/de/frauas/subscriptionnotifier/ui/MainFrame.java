@@ -5,6 +5,8 @@ import de.frauas.subscriptionnotifier.channels.SmsChannel;
 import de.frauas.subscriptionnotifier.model.Subscription;
 import de.frauas.subscriptionnotifier.model.User;
 import de.frauas.subscriptionnotifier.channels.CommunicationChannel;
+import de.frauas.subscriptionnotifier.observer.SubscriptionObserver;
+import de.frauas.subscriptionnotifier.observer.ConfirmationMail;
 
 import javax.swing.*;
 import java.awt.*;
@@ -15,6 +17,7 @@ public class MainFrame extends JFrame {
 	private static final long serialVersionUID = 1L;
 	private final List<User> users = new ArrayList<>();
     private User selectedUser;
+    private final List<SubscriptionObserver> observers = new ArrayList<>();
 
     private JTextField usernameField, emailField, phoneField;
     private JTextField urlField, frequencyField;
@@ -31,6 +34,7 @@ public class MainFrame extends JFrame {
         setSize(600, 500);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
+        observers.add(new ConfirmationMail());
 
         JPanel userPanel = new JPanel();
         userPanel.setBorder(BorderFactory.createTitledBorder("User Management"));
@@ -153,6 +157,9 @@ public class MainFrame extends JFrame {
             String subId = "sub" + (selectedUser.getSubscriptions().size() + 1);
             Subscription subscription = new Subscription(subId, url, freq, channel);
             selectedUser.addSubscription(subscription);
+            for (SubscriptionObserver observer : observers) {
+                observer.update(selectedUser, subscription);
+            }
             outputArea.setText("Subscription to " + url + " added for user " + selectedUser.getUsername());
         } catch (NumberFormatException e) {
             outputArea.setText("Invalid frequency. Please enter a number.");
